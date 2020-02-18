@@ -14,3 +14,4 @@
 ## Things I'm not thinking about just yet but might in the future
 	- Adding managed rules (cost optimization)
 	- pass aws cli 1/2 as command line argument
+
