@@ -1,10 +1,12 @@
 # AWS WAF classic to AWS WAF
 - Status : INCOMPLETE
+Creates a rulegroup for each rule in classic waf
+
 
 ## To Do
 - Modularise
-	- get data
-	- Match rules
+	- Port to boto3
+	- add support for ratebased rules
 	- Unlink resourses from classic waf
 	- link resources to new one
 	- Delete classic waf
