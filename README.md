@@ -6,7 +6,7 @@ Now creates a json file using which a rule group can be created.
 
 - If a IP set alreday exists it crashes.
 - If a IP set is reused then it tries to create it again and crashes.
-- Rate based rules give the error -
+- Rate based rules gives the error -
 ```
 An error occurred (WAFInvalidParameterException) when calling the CreateRuleGroup operation: Error reason: A reference in your rule statement is not valid., field: RATE_BASED_STATEMENT, parameter: RateBasedStatement
 ```
