@@ -1,0 +1,20 @@
+[
+    {
+        "Name": "RateBasedRule",
+        "Priority": 2,
+        "Action": {
+            "Block": {}
+        },
+        "Statement": {
+            "RateBasedStatement": {
+                "Limit": 2000,
+                "AggregateKeyType": "IP"
+            }
+        },
+        "VisibilityConfig": {
+            "SampledRequestsEnabled": true,
+            "CloudWatchMetricsEnabled": true,
+            "MetricName": "RateBasedRuleMetric"
+        }
+    }
+]
