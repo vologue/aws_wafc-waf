@@ -1,12 +1,20 @@
 # AWS WAF classic to AWS WAF
 - Status : INCOMPLETE
-Creates a rulegroup for each rule in classic waf
+Now creates a json file using which a rule group can be created.
 
+## Issues
+
+- If a IP set alreday exists it crashes.
+- If a IP set is reused then it tries to create it again and crashes.
+- Rate based rules give the error -
+```
+An error occurred (WAFInvalidParameterException) when calling the CreateRuleGroup operation: Error reason: A reference in your rule statement is not valid., field: RATE_BASED_STATEMENT, parameter: RateBasedStatement
+```
+- To create remove it from the json file and use the same to add it through the console
 
 ## To Do
 - Modularise
 	- Port to boto3
-	- add support for ratebased rules
 	- Unlink resourses from classic waf
 	- link resources to new one
 	- Delete classic waf
