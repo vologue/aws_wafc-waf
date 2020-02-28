@@ -9,7 +9,7 @@ def removespace(name):
 
 # Creates a new regex patternset
 def create_regex_patterset(RegexPatternSetId):
-    pattern_set = json.loads(sp.getoutput("aws waf get-regex-pattern-set --regex-pattern-set-id "+ RegexPatternSetId))
+    pattern_set = json.loads(sp.getoutput("aws waf-regional get-regex-pattern-set --regex-pattern-set-id "+ RegexPatternSetId))
     pattern_set = pattern_set['RegexPatternSet']
     pattern_list = []
     for regex in pattern_set['RegexPatternStrings']:
@@ -22,7 +22,7 @@ def create_regex_patterset(RegexPatternSetId):
 
 # Creates a new IP set 
 def create_ipset(ipsetid):
-    ip_set = json.loads(sp.getoutput("aws waf get-ip-set --ip-set-id "+ ipsetid))
+    ip_set = json.loads(sp.getoutput("aws waf-regional get-ip-set --ip-set-id "+ ipsetid))
     ip_set = ip_set['IPSet']
     ipv4set = str()
     ipv6set = str()
@@ -106,28 +106,44 @@ def build_statement(predicate,num):
         statementset = "NotStatement"
 
     if (predicate["Type"] == "XssMatch"):
-        old_statements = json.loads(sp.getoutput("aws waf get-xss-match-set --xss-match-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-xss-match-set --xss-match-set-id " + predicate["DataId"]))
         old_statements = old_statements['XssMatchSet']
-        temp = {statementset : {"Statements" : []}}
         for state in range(len(old_statements["XssMatchTuples"])):
             statement.append({"XssMatchStatement" : match_fileds(old_state = old_statements["XssMatchTuples"][state],i = state)})
-        if num==1:
+        if (len(old_statements["XssMatchTuples"])==1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {}}}
+            temp[statementset]["Statement"] = statement[0]
+            return temp
+        elif len(old_statements["XssMatchTuples"])==1:
             return statement[0]
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(old_statements["XssMatchTuples"]) > 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement":{"Statements" : []}}}}
+            temp[statementset]["Statement"]["AndStatement"]["Statements"] = statement
+            return temp
+        elif (len(old_statements["XssMatchTuples"]) >1):
+            temp = {statementset : {"Statements" : []}}
             temp[statementset]["Statements"] = statement
             return temp
         else:
             return {}
 
     elif (predicate["Type"] == "SqlInjectionMatch"):
-        old_statements = json.loads(sp.getoutput("aws waf get-sql-injection-match-set --sql-injection-match-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-sql-injection-match-set --sql-injection-match-set-id " + predicate["DataId"]))
         old_statements = old_statements['SqlInjectionMatchSet']
-        temp = {statementset : {"Statements" : []}}
         for state in range(len(old_statements["SqlInjectionMatchTuples"])):
             statement.append({"SqliMatchStatement" : match_fileds(old_state = old_statements["SqlInjectionMatchTuples"][state],i = state)})
-        if num==1:
+        if (len(old_statements["SqlInjectionMatchTuples"]) == 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {}}}
+            temp[statementset]["Statement"] = statement[0]
+            return temp
+        elif len(old_statements["SqlInjectionMatchTuples"])==1:
             return statement[0]
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(old_statements["SqlInjectionMatchTuples"]) > 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement":{"Statements" : []}}}}
+            temp[statementset]["Statement"]["AndStatement"]["Statements"] = statement
+            return temp
+        elif (len(old_statements["SqlInjectionMatchTuples"]) >1):
+            temp = {statementset : {"Statements" : []}}
             temp[statementset]["Statements"] = statement
             return temp
         else:
@@ -135,17 +151,25 @@ def build_statement(predicate,num):
 
 
     elif (predicate["Type"] == "ByteMatch"):
-        old_statements = json.loads(sp.getoutput("aws waf get-byte-match-set --byte-match-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-byte-match-set --byte-match-set-id " + predicate["DataId"]))
         old_statements = old_statements['ByteMatchSet']
-        temp = {statementset : {"Statements" : []}}
         for state in range(len(old_statements["ByteMatchTuples"])):
             bytetuple = match_fileds(old_state = old_statements["ByteMatchTuples"][state],i = state)
             bytetuple['SearchString'] = old_statements["ByteMatchTuples"][state]['TargetString']
             bytetuple['PositionalConstraint'] = old_statements["ByteMatchTuples"][state]['PositionalConstraint']
             statement.append({"ByteMatchStatement" :  bytetuple})
-        if num==1:
+        if (len(old_statements["ByteMatchTuples"]) == 1 and predicate["Negated"] == True) :
+            temp = {statementset : {"Statement" : {}}}
+            temp[statementset]["Statement"] = statement[0]
+            return temp
+        elif len(old_statements["ByteMatchTuples"])==1:
             return statement[0]
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(old_statements["ByteMatchTuples"]) > 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement":{"Statements" : []}}}}
+            temp[statementset]["Statement"]["AndStatement"]["Statements"] = statement
+            return temp
+        elif (len(old_statements["ByteMatchTuples"]) >1):
+            temp = {statementset : {"Statements" : []}}
             temp[statementset]["Statements"] = statement
             return temp
         else:
@@ -153,17 +177,26 @@ def build_statement(predicate,num):
 
 
     elif (predicate["Type"] == "SizeConstraint"):
-        old_statements = json.loads(sp.getoutput("aws waf get-size-constraint-set --size-constraint-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-size-constraint-set --size-constraint-set-id " + predicate["DataId"]))
         old_statements = old_statements['SizeConstraintSet']
-        temp = {statementset : {"Statements" : []}}
         for state in range(len(old_statements["SizeConstraints"])):
             bytetuple = match_fileds(old_state = old_statements["SizeConstraints"][state],i = state)
             bytetuple['ComparisonOperator'] = old_statements["SizeConstraints"][state]['ComparisonOperator']
             bytetuple['Size'] = old_statements["SizeConstraints"][state]['Size']
             statement.append({"SizeConstraintStatement" :  bytetuple})
-        if num==1:
+        
+        if (len(old_statements["SizeConstraints"]) == 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {}}}
+            temp[statementset]["Statement"] = statement[0]
+            return temp
+        elif len(old_statements["SizeConstraints"])==1:
             return statement[0]
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(old_statements["SizeConstraints"]) > 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement":{"Statements" : []}}}}
+            temp[statementset]["Statement"]["AndStatement"]["Statements"] = statement
+            return temp
+        elif (len(old_statements["SizeConstraints"]) >1):
+            temp = {statementset : {"Statements" : []}}
             temp[statementset]["Statements"] = statement
             return temp
         else:
@@ -171,16 +204,25 @@ def build_statement(predicate,num):
 
     
     elif (predicate["Type"] == "RegexMatch"):
-        old_statements = json.loads(sp.getoutput("aws waf get-regex-match-set --regex-match-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-regex-match-set --regex-match-set-id " + predicate["DataId"]))
         old_statements = old_statements['RegexMatchSet']
-        temp = {statementset : {"Statements" : []}}
         for state in range(len(old_statements["RegexMatchTuples"])):
             bytetuple = match_fileds(old_state = old_statements["RegexMatchTuples"][state],i = state)
             bytetuple['ARN'] = create_regex_patterset(old_statements["RegexMatchTuples"][state]['RegexPatternSetId'])
             statement.append({"RegexPatternSetReferenceStatement" :  bytetuple})
-        if num==1:
+
+        if (len(old_statements["RegexMatchTuples"]) == 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {}}}
+            temp[statementset]["Statement"] = statement[0]
+            return temp
+        elif len(old_statements["RegexMatchTuples"])==1:
             return statement[0]
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(old_statements["RegexMatchTuples"]) > 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement":{"Statements": []}}}}
+            temp[statementset]["Statement"]["AndStatement"]["Statements"] = statement
+            return temp
+        elif (len(old_statements["RegexMatchTuples"]) >1):
+            temp = {statementset : {"Statements" : []}}
             temp[statementset]["Statements"] = statement
             return temp
         else:
@@ -189,28 +231,39 @@ def build_statement(predicate,num):
     
     elif (predicate["Type"] == "IPMatch"):
         ARN = create_ipset(predicate["DataId"])
-        temp = {statementset : {"Statements" : []}}
-        if len(ARN)==1:
+
+        if (len(ARN) == 1 and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {}}}
+            for ipset in ARN:
+                temp[statementset]["Statement"] = {"IPSetReferenceStatement" : {"ARN": ipset}}
+            return temp
+        elif len(ARN)==1:
             return {"IPSetReferenceStatement" : {"ARN": ARN[0]}}
-        elif (len(ARN) == 1 and predicate["Negated"] == True) or (num >1):
+        elif (len(ARN >1) and predicate["Negated"] == True):
+            temp = {statementset : {"Statement" : {"AndStatement" : {"Statements" : []}}}}
+            for ipset in ARN:
+                temp[statementset]["Statement"]["AndStatement"]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
+            return temp
+        elif (len(ARN >1)):
+            temp = {statementset : {"Statements" : []}}
             for ipset in ARN:
                 temp[statementset]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
-            temp[statementset]["Statements"] = statement
+
             return temp
         else:
             return {}
 
     elif (predicate["Type"] == "GeoMatch"):
-        old_statements = json.loads(sp.getoutput("aws waf get-geo-match-set --geo-match-set-id " + predicate["DataId"]))
+        old_statements = json.loads(sp.getoutput("aws waf-regional get-geo-match-set --geo-match-set-id " + predicate["DataId"]))
         old_statements = old_statements['GeoMatchSet']
-        tempstatement = {statementset : {"Statements" : []}}
         temp = {"GeoMatchStatement": {"CountryCodes" : []}}
         for state in range(len(old_statements["GeoMatchConstraints"])):
             temp["GeoMatchStatement"]["CountryCodes"].append(old_statements["GeoMatchConstraints"][state]["Value"])
-        if num ==1 :
+        if len(old_statements["GeoMatchConstraints"]) == 1:
             return temp
-        elif (num == 1 and predicate["Negated"] == True) or (num >1):
-            tempstatement[statementset]["Statements"] = statement
+        elif (predicate["Negated"] == True):
+            tempstatement = {statementset : {"Statement" : {}}}
+            tempstatement[statementset]["Statement"] = temp
             return tempstatement
         else :
             return {}
@@ -218,8 +271,9 @@ def build_statement(predicate,num):
 
 #builds and returns a rule
 def rule_match(old_rule):
-    o_rules = json.loads(sp.getoutput("aws waf get-rule --rule-id " + old_rule["RuleId"]))
+    o_rules = json.loads(sp.getoutput("aws waf-regional get-rule --rule-id " + old_rule["RuleId"]))
     o_rule = o_rules["Rule"]
+    print("rebuilding rule :" + o_rule['Name'])
     rule = {
             "Name" : removespace(o_rule['Name'])+"New",
             "Priority" : old_rule["Priority"],
@@ -236,7 +290,6 @@ def rule_match(old_rule):
         }
     if(len(o_rule["Predicates"]) > 1):
         rule["Statement"] = {"AndStatement" : {"Statements" : []}}
-        print(rule)
 
     for predicate in o_rule["Predicates"]:
         if(len(o_rule["Predicates"])>1):
@@ -244,44 +297,3 @@ def rule_match(old_rule):
         else:
             rule['Statement'] = build_statement(predicate = predicate, num = len(o_rule["Predicates"]))
     return (rule)
-
-
-
-    # "RateBasedStatement": {
-    #     "Limit": long,
-    #     "AggregateKeyType": "IP",
-    #     "ScopeDownStatement": {
-    #       "ByteMatchStatement": {
-    #         "SearchString": blob,
-    #         "FieldToMatch": {
-    #           "SingleHeader": {
-    #             "Name": "string"
-    #           },
-    #           "SingleQueryArgument": {
-    #             "Name": "string"
-    #           },
-    #           "AllQueryArguments": {
-
-    #           },
-    #           "UriPath": {
-
-    #           },
-    #           "QueryString": {
-
-    #           },
-    #           "Body": {
-
-    #           },
-    #           "Method": {
-
-    #           }
-    #         },
-    #         "TextTransformations": [
-    #           {
-    #             "Priority": integer,
-    #             "Type": "NONE"|"COMPRESS_WHITE_SPACE"|"HTML_ENTITY_DECODE"|"LOWERCASE"|"CMD_LINE"|"URL_DECODE"
-    #           }
-    #           ...
-    #         ],
-    #         "PositionalConstraint": "EXACTLY"|"STARTS_WITH"|"ENDS_WITH"|"CONTAINS"|"CONTAINS_WORD"
-    #       }
