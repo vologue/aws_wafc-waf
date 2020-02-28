@@ -23,8 +23,6 @@ for acl in val['WebACLs']:
 
         if(r["Type"] == "RATE_BASED"):
             newrule = ratebased.rulebuilder(r)
-            if newrule["Statement"] == {} :
-                continue
             rules.append(newrule)
         else:
             newrule = rulematch.rule_match(r)
@@ -33,8 +31,10 @@ for acl in val['WebACLs']:
             rules.append(newrule)
     print("Generated Json file for creating the group - ")
     rules = json.dumps(rules)
+    print(rules)
     f = open("rulegroup.json","w")
     f.write(rules)
+    f.close()
     print("Please run the following command -")
     # For some reason this refuses to run from here
     command  = "./create_web_acl.sh %s %s" %(name,visibilityconfig)

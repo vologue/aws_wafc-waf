@@ -33,9 +33,12 @@ def create_ipset(ipsetid):
         elif (ip["Type"] == "IPV6"):
             ipv6set = ipv6set + " " + ip["Value"]
     if(ipv4set != ""):
-        create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv4set --scope REGIONAL --ip-address-version IPV4 --addresses %s" %(ipv4set)))
-        create = create["Summary"]
-        arn.append(create["ARN"])
+        try:
+            create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv4set --scope REGIONAL --ip-address-version IPV4 --addresses %s" %(ipv4set)))
+            create = create["Summary"]
+            arn.append(create["ARN"])
+        except:
+            print("Fail")
         # arn=["ipv4arn"]
     elif(ipv6set != ""):
         create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv6set --scope REGIONAL --ip-address-version IPV6 --addresses %s" %(ipv6set)))
@@ -99,7 +102,7 @@ def match_fileds(old_state, i):
 
 
 # builds the statement 
-def build_statement(predicate,num):
+def build_statement(predicate):
     statement =list()
     statementset = "OrStatement"
     if(predicate["Negated"] == True):
@@ -239,12 +242,12 @@ def build_statement(predicate,num):
             return temp
         elif len(ARN)==1:
             return {"IPSetReferenceStatement" : {"ARN": ARN[0]}}
-        elif (len(ARN >1) and predicate["Negated"] == True):
+        elif (len(ARN) >1 and predicate["Negated"] == True):
             temp = {statementset : {"Statement" : {"AndStatement" : {"Statements" : []}}}}
             for ipset in ARN:
                 temp[statementset]["Statement"]["AndStatement"]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
             return temp
-        elif (len(ARN >1)):
+        elif (len(ARN) >1):
             temp = {statementset : {"Statements" : []}}
             for ipset in ARN:
                 temp[statementset]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
@@ -293,7 +296,7 @@ def rule_match(old_rule):
 
     for predicate in o_rule["Predicates"]:
         if(len(o_rule["Predicates"])>1):
-            rule['Statement']["AndStatement"]["Statements"].append(build_statement(predicate = predicate, num = len(o_rule["Predicates"])))
+            rule['Statement']["AndStatement"]["Statements"].append(build_statement(predicate = predicate))
         else:
-            rule['Statement'] = build_statement(predicate = predicate, num = len(o_rule["Predicates"]))
+            rule['Statement'] = build_statement(predicate = predicate)
     return (rule)

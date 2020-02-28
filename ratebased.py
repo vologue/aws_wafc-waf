@@ -21,7 +21,7 @@ def rulebuilder(classic_rule):
         "VisibilityConfig": {
             "SampledRequestsEnabled": True,
             "CloudWatchMetricsEnabled": True,
-            "MetricName": o_rule['Name']+"NewMetric"
+            "MetricName": rulematch.removespace(o_rule['Name'])+"NewMetric"
         }
     }
 
@@ -31,8 +31,8 @@ def rulebuilder(classic_rule):
     for predicate in o_rule["MatchPredicates"]:
        
         if(len(o_rule["MatchPredicates"])>1):
-            rule['Statement']['RateBasedStatement']["ScopeDownStatement"]["AndStatement"]["Statements"].append(rulematch.build_statement(predicate = predicate,num = len(o_rule["MatchPredicates"])))
+            rule['Statement']['RateBasedStatement']["ScopeDownStatement"]["AndStatement"]["Statements"].append(rulematch.build_statement(predicate = predicate))
         else:
-            rule['Statement']['RateBasedStatement']["ScopeDownStatement"] = rulematch.build_statement(predicate = predicate,num = len(o_rule["MatchPredicates"]))
+            rule['Statement']['RateBasedStatement']["ScopeDownStatement"] = rulematch.build_statement(predicate = predicate)
     
     return rule

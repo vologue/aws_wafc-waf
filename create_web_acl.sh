@@ -1,7 +1,7 @@
 aws wafv2 create-web-acl --name $1 \
 --scope REGIONAL \
+--rules file://rulegroup.json \
 --default-action Block={} \
---rules 'file://rulegroup.json' \
 --visibility-config $2 \
 --region ap-south-1  
 
