@@ -1,9 +1,0 @@
-{
-    "Summary": {
-        "ARN": "arn:aws:wafv2:ap-south-1:645312621454:regional/rulegroup/testRuleGroup/7dfb9b9e-14c5-4ea3-817a-60b9dacfd1a0", 
-        "Description": "", 
-        "Name": "testRuleGroup", 
-        "LockToken": "43ce7779-d4f5-48eb-8a26-f6c2dd70774d", 
-        "Id": "7dfb9b9e-14c5-4ea3-817a-60b9dacfd1a0"
-    }
-}

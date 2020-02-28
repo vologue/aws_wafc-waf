@@ -37,7 +37,7 @@ for acl in val['WebACLs']:
     f.write(rules)
     print("Please run the following command -")
     # For some reason this refuses to run from here
-    command  = "./creategroup.sh %s %s" %(name,visibilityconfig)
+    command  = "./create_web_acl.sh %s %s" %(name,visibilityconfig)
     print(command)
     #aclv2 = json.loads(os.popen(command).read())
     #aclv2 = aclv2["Summary"]["ARN"]
