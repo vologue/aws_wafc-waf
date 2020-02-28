@@ -17,7 +17,10 @@ def create_regex_patterset(RegexPatternSetId):
     pattern_list = []
     for regex in pattern_set['RegexPatternStrings']:
         pattern_list.append({"RegexString" : regex})
-    create = sp.getoutput("aws wafv2 create-regex-pattern-set --name " + pattern_set["Name"] + "set --scope REGIONAL --region "+region+" --regular-expression-list ' " +json.dumps(pattern_list)+"'")
+    try:
+        create = sp.getoutput("aws wafv2 create-regex-pattern-set --name " + pattern_set["Name"] + "set --scope REGIONAL --region "+region+" --regular-expression-list ' " +json.dumps(pattern_list)+"'")
+    except:
+        print("RegexPatternSet creation failed, check if you have the permissions to create RegexPatternSet or if a RegexPatternSet by the name '"+pattern_set['Name']+"' already exists. (If yes delete and try again)")
     arn = json.loads(create)
     arn = arn["Summary"]["ARN"]
     # arn = "regexarn"
@@ -41,12 +44,15 @@ def create_ipset(ipsetid):
             create = create["Summary"]
             arn.append(create["ARN"])
         except:
-            print("Fail")
+            print("IPset creation failed, check if you have the permissions to create IPsets or if an IPset by the name '"+ip_set['Name']+"ipv4set' already exists. (If yes delete and try again)")
         # arn=["ipv4arn"]
     elif(ipv6set != ""):
-        create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv6set --scope REGIONAL --region "+region+" --ip-address-version IPV6 --addresses %s" %(ipv6set)))
-        create = create["Summary"]
-        arn.append(create["ARN"])
+        try:
+            create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv6set --scope REGIONAL --region "+region+" --ip-address-version IPV6 --addresses %s" %(ipv6set)))
+            create = create["Summary"]
+            arn.append(create["ARN"])
+        except:
+            print("IPset creation failed, check if you have the permissions to create IPsets or if an IPset by the name '"+ip_set['Name']+"ipv6set' already exists. (If yes delete and try again)")
         # arn=["ipv6arn"]
     return arn
 
