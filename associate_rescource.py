@@ -1,7 +1,7 @@
 import json 
-import boto3
 import subprocess as sp
 import os
+
 def get_rescource_list(rule_id):
     loadbalancers = json.loads(sp.getoutput('aws elbv2 describe-load-balancers'))
     loadbalancers = loadbalancers["LoadBalancers"]

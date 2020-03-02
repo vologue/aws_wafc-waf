@@ -2,6 +2,7 @@ import subprocess as sp
 import json
 import rulematch
 
+
 def rulebuilder(classic_rule):
     o_rule = json.loads(sp.getoutput("aws waf-regional get-rate-based-rule --rule-id " + classic_rule['RuleId']))
     o_rule = o_rule["Rule"]
