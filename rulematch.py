@@ -7,6 +7,9 @@ def removespace(name):
     temp =  ''.join(name.split(" "))
     return 'And'.join(temp.split("&"))
 
+#The variable region is initialized in waf-classic-to-associate 
+global region
+
 # Creates a new regex patternset
 def create_regex_patterset(RegexPatternSetId):
     pattern_set = json.loads(sp.getoutput("aws waf-regional get-regex-pattern-set --regex-pattern-set-id "+ RegexPatternSetId))
@@ -14,7 +17,7 @@ def create_regex_patterset(RegexPatternSetId):
     pattern_list = []
     for regex in pattern_set['RegexPatternStrings']:
         pattern_list.append({"RegexString" : regex})
-    create = sp.getoutput("aws wafv2 create-regex-pattern-set --name " + pattern_set["Name"] + "set --scope REGIONAL --region ap-south-1 --regular-expression-list ' " +json.dumps(pattern_list)+"'")
+    create = sp.getoutput("aws wafv2 create-regex-pattern-set --name " + pattern_set["Name"] + "set --scope REGIONAL --region "+region+" --regular-expression-list ' " +json.dumps(pattern_list)+"'")
     arn = json.loads(create)
     arn = arn["Summary"]["ARN"]
     # arn = "regexarn"
@@ -33,12 +36,15 @@ def create_ipset(ipsetid):
         elif (ip["Type"] == "IPV6"):
             ipv6set = ipv6set + " " + ip["Value"]
     if(ipv4set != ""):
-        create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv4set --scope REGIONAL --ip-address-version IPV4 --addresses %s" %(ipv4set)))
-        create = create["Summary"]
-        arn.append(create["ARN"])
+        try:
+            create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv4set --scope REGIONAL --region "+region+" --ip-address-version IPV4 --addresses %s" %(ipv4set)))
+            create = create["Summary"]
+            arn.append(create["ARN"])
+        except:
+            print("Fail")
         # arn=["ipv4arn"]
     elif(ipv6set != ""):
-        create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv6set --scope REGIONAL --ip-address-version IPV6 --addresses %s" %(ipv6set)))
+        create = json.loads(sp.getoutput("aws wafv2 create-ip-set --name "+ ip_set['Name'] +"ipv6set --scope REGIONAL --region "+region+" --ip-address-version IPV6 --addresses %s" %(ipv6set)))
         create = create["Summary"]
         arn.append(create["ARN"])
         # arn=["ipv6arn"]
@@ -99,7 +105,7 @@ def match_fileds(old_state, i):
 
 
 # builds the statement 
-def build_statement(predicate,num):
+def build_statement(predicate):
     statement =list()
     statementset = "OrStatement"
     if(predicate["Negated"] == True):
@@ -239,12 +245,12 @@ def build_statement(predicate,num):
             return temp
         elif len(ARN)==1:
             return {"IPSetReferenceStatement" : {"ARN": ARN[0]}}
-        elif (len(ARN >1) and predicate["Negated"] == True):
+        elif (len(ARN) >1 and predicate["Negated"] == True):
             temp = {statementset : {"Statement" : {"AndStatement" : {"Statements" : []}}}}
             for ipset in ARN:
                 temp[statementset]["Statement"]["AndStatement"]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
             return temp
-        elif (len(ARN >1)):
+        elif (len(ARN) >1):
             temp = {statementset : {"Statements" : []}}
             for ipset in ARN:
                 temp[statementset]["Statements"].append({"IPSetReferenceStatement" : {"ARN": ipset}})
@@ -271,6 +277,7 @@ def build_statement(predicate,num):
 
 #builds and returns a rule
 def rule_match(old_rule):
+    print(region)
     o_rules = json.loads(sp.getoutput("aws waf-regional get-rule --rule-id " + old_rule["RuleId"]))
     o_rule = o_rules["Rule"]
     print("rebuilding rule :" + o_rule['Name'])
@@ -293,7 +300,7 @@ def rule_match(old_rule):
 
     for predicate in o_rule["Predicates"]:
         if(len(o_rule["Predicates"])>1):
-            rule['Statement']["AndStatement"]["Statements"].append(build_statement(predicate = predicate, num = len(o_rule["Predicates"])))
+            rule['Statement']["AndStatement"]["Statements"].append(build_statement(predicate = predicate))
         else:
-            rule['Statement'] = build_statement(predicate = predicate, num = len(o_rule["Predicates"]))
+            rule['Statement'] = build_statement(predicate = predicate)
     return (rule)
