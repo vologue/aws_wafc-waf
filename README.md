@@ -4,7 +4,7 @@ Migrates regional webacl from classic WAF to WAFv2.
 
 ## Issues
 
-- If a IP set alreday exists it crashes.
+- If a IP set already exists it crashes.
 - If a IP set is reused then it tries to create it again and crashes.
 - Works for only regional waf
 
