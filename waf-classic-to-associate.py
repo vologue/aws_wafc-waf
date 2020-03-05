@@ -6,9 +6,6 @@ import subprocess as sp
 import associate_rescource
 import createset
 
-def removespace(name):
-    temp =  ''.join(name.split(" "))
-    return 'And'.join(name.split("&"))
 
 def main():
     val  = json.loads(os.popen('aws waf-regional list-web-acls').read())
@@ -17,7 +14,7 @@ def main():
         acl_desc = json.loads(os.popen('aws waf-regional get-web-acl --web-acl-id %s' %(acl_id)).read())['WebACL']
         # print(acl_desc)
         def_action = acl_desc['DefaultAction']['Type'][0]+acl_desc['DefaultAction']['Type'][1:].lower()
-        name = removespace(acl_desc['Name'])+'Rule'
+        name = rulematch.make_regex_compliant(acl_desc['Name'])+'Rule'
         visibilityconfig = "SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName="+name+"METRICS"
         # print(acl_desc["WebACLArn"])
         createset.region = acl_desc["WebACLArn"].split(':')[-3]
@@ -40,9 +37,9 @@ def main():
         f = open("rulegroup.json","w")
         f.write(rules)
         f.close()
-        print("Please run the following command -")
+        print("Creating New webacl -")
         command  = "aws wafv2 create-web-acl --name %s --scope REGIONAL --default-action %s={} --rules file://rulegroup.json --visibility-config %s --region %s" %(name,def_action,visibilityconfig,createset.region)
-        print(command)
+        #print(command)
         aclv2 = json.loads(os.popen(command).read())
         aclv2 = aclv2["Summary"]["ARN"]
         arns = associate_rescource.get_rescource_list("2c659f1c-8f9b-40fd-834a-89961e7895eb")
