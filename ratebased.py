@@ -8,7 +8,7 @@ def rulebuilder(classic_rule):
     o_rule = o_rule["Rule"]
     
     rule = {
-        "Name" : rulematch.removespace(o_rule['Name'])+"New",
+        "Name" : rulematch.make_regex_compliant(o_rule['Name'])+"New",
         "Priority" : classic_rule["Priority"],
         "Action" : {
             classic_rule['Action']["Type"][0]+classic_rule['Action']["Type"][1:].lower() : {}
@@ -22,7 +22,7 @@ def rulebuilder(classic_rule):
         "VisibilityConfig": {
             "SampledRequestsEnabled": True,
             "CloudWatchMetricsEnabled": True,
-            "MetricName": rulematch.removespace(o_rule['Name'])+"NewMetric"
+            "MetricName": rulematch.make_regex_compliant(o_rule['Name'])+"NewMetric"
         }
     }
 
