@@ -11,7 +11,7 @@ aws configure
 ```
 - Run 
 ```
-python3 waf-clssic-to-associate.py 
+python3 wafer.py
 ```
 ## Goals Achieved
  - Creates a json file from calssic WAF that can be used to apply updates to WAFv2
